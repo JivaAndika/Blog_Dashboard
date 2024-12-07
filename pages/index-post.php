@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . "/../model/posts.php";
 require_once __DIR__ . "/../model/users.php";
+require_once __DIR__ . "/../model/tags.php";
 require_once __DIR__ . "/../model/model.php";
 
 
@@ -12,10 +13,12 @@ if (!isset($_SESSION['full_name'])){
 }
 $Users = new Users();
 $Posts = new Posts();
-$id = $_SESSION['id'];
-$roles = $_SESSION['roles'];
-// var_dump($roles);
-$find_user = $Users->find($id);
+$Tags = new Tags();
+$show_tag = $Tags->show_tag();
+$groupedTags = [];
+foreach ($show_tag as $tag) {
+    $groupedTags[$tag['post_id_pivot']][] = $tag['name_tag'];
+}
 
 
 
@@ -53,7 +56,11 @@ $next = ($pageActive < $countPage) ? $pageActive + 1 :$countPage ;
   <link rel="stylesheet" href="../dist/assets/css/style.css">
   <link rel="stylesheet" href="../dist/assets/css/components.css">
   <style>
-  
+  .modal-body {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
   </style>
 <!-- Start GA -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=UA-94034622-3"></script>
@@ -84,84 +91,58 @@ $next = ($pageActive < $countPage) ? $pageActive + 1 :$countPage ;
             <h1>Halaman kategori</h1>
           </div>
           <div class="section-body">  
-            <div class="row">
-              <div class="col-12">
-                <div class="card">
-                  <div class="card-header">
-                    <h4>Home kategori</h4>
-                    <div class="card-header-form">
-                      <form method="post" >
-                        <div class="input-group">
-                          <input type="text" class="form-control"  name="keyCat" id="keyCat" placeholder="Search">
-                          <div class="input-group-btn">
-                            <button class="btn btn-primary" ><i class="fas fa-search"></i></button>
-                          </div>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                  <div class="card-body p-0">
-                    <div class="table-responsive" id="container">
-                      <table class="table table-striped">
-                        <tr>
-                          <th>No</th>
-                          <th>Judul Post</th>
-                          <th>Gambar Post</th>
-                          <th>Author</th>
-                          <th>Action</th>
-                        </tr>
-                        <?php $num = 1 ?>
-                        <?php foreach($Posts_detail as $post ):?>
-                          <td><?= $num ?> </td>
-                          <td ><?= $post["tittle"] ?></td>
-                          <td><img src="../assets/img/posts/<?= $post["attachment_post"] ?>" alt="image category" width="80"  class="my-3" ></td>
-                          <td ><?= $post["full_name"] ?></td>
-                          
-                          
-                          <td>
-                            <button href="#" onclick='modalDetails("<?= $post["content"] ?>")' class="btn btn-primary mr-1"><i class="fas fa-info-circle"></i> Detail</button>
-                            <a href="edit-post.php?id_post=<?= $post["id_post"] ?>" class="btn btn-success mr-1"><i class="far fa-edit"></i> Edit</a>
-                            <a href="../services/delete-post.php?id_post=<?= $post["id_post"] ?>" class="btn btn-danger mr-1"><i class="fas fa-trash"></i> Delete</a>
-                        </td>
-                        </tr>
-                        <?php $num++ ?>
+          <div class="row">
+  <?php foreach ($Posts_detail as $post): ?>
+    <div class="col-md-4 col-sm-6 mb-4">
+      <div class="card h-100">
+        <img src="../assets/img/posts/<?= $post['attachment_post'] ?>" class="card-img-top" alt="<?= $post['tittle'] ?>">
+        <div class="card-body">
+          <h5 class="card-title text-truncate" style="max-width: 200px;"> <?= $post['tittle'] ?> </h5>
+          <p class="card-text">Author: <?= $post['full_name'] ?></p>
+          <p class="card-text">Created at: <?= $post['created_at'] ?></p>
+        </div>
+        <div class="card-footer d-flex  justify-content-between">
+          <button onclick='modalDetails("<?= $post["content"] ?>")'  class="btn btn-primary btn-sm">
+            <i class="fas fa-info-circle"></i> Detail
+          </button>
+          <a href="edit-post.php?id_post=<?= $post['id_post'] ?>" class="btn btn-success btn-sm">
+            <i class="far fa-edit"></i> Edit
+          </a>
+          <a href="../services/delete-post.php?id_post=<?= $post['id_post'] ?>" class="btn btn-danger btn-sm">
+            <i class="fas fa-trash"></i> Delete
+          </a>
+        </div>
+      </div>
+    </div>
+  <?php endforeach; ?>
+</div>
 
+<div class="d-flex justify-content-center mt-4"> 
+  <nav aria-label="Page navigation">
+    <ul class="pagination">
+      <li class="page-item">
+        <?php if ($pageActive > 1): ?>
+        <a class="page-link" href="?page=<?= $prev ?>" aria-label="Previous">
+          <span aria-hidden="true">&laquo;</span>
+        </a>
+        <?php endif; ?>
+      </li>
+      <?php for ($i = 1; $i <= $countPage; $i++): ?>
+        <li class="page-item<?= ($i == $pageActive) ? ' active' : '' ?>">
+          <a class="page-link" href="?page=<?= $i ?>"><?= $i ?></a>
+        </li>
+      <?php endfor; ?>
+      <li class="page-item">
+        <?php if ($pageActive < $countPage): ?>
+        <a class="page-link" href="?page=<?= $next ?>" aria-label="Next">
+          <span aria-hidden="true">&raquo;</span>
+        </a>
+        <?php endif; ?>
+      </li>
+    </ul>
+  </nav>
+</div>
 
-                        
-                        <?php endforeach ?>
-                        
-                          
-                      </table>
-                      <div class="d-flex justify-content-center"> 
-                        <nav aria-label="Page navigation">
-                          <ul class="pagination">
-                            <li class="page-item ">
-                              <?php if ($pageActive > 1):?>
-                              <a class="page-link" href="?page=<?= $prev ?>" aria-label="Previous">
-                                <span aria-hidden="true">&laquo;</span>
-                              </a>
-                              <?php endif;?>
-                            </li>
-                            <?php for ($i = 1; $i <= $countPage; $i++): ?>
-                              <li class="page-item">
-                                <a class="page-link" href="?page=<?= $i ?>"><?= $i ?></a>
-                              </li>
-                              <?php endfor; ?>
-                            <li class="page-item">
-                              <?php if ($pageActive < $countPage):?>
-                              <a class="page-link" href="?page=<?= $next ?>" aria-label="Next">
-                                <span aria-hidden="true">&raquo;</span>
-                              </a>
-                              <?php endif;?>
-                            </li>
-                          </ul>
-                        </nav>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </section>
       </div>
@@ -178,7 +159,7 @@ $next = ($pageActive < $countPage) ? $pageActive + 1 :$countPage ;
                   <span aria-hidden="true">&times;</span>
                 </button>
               </div>
-              <div class="modal-body">
+              <div class="modal-body text-truncate" style="max-height: 200px;">
                 <!-- <p>Modal body text goes here.</p> -->
               </div>
               <div class="modal-footer bg-whitesmoke br">
@@ -199,14 +180,14 @@ $next = ($pageActive < $countPage) ? $pageActive + 1 :$countPage ;
   });
 });
 
-
   function modalDetails(desc){
-      let content = '<ul>';
+      let content = '<ul >';
       content += `<li><strong>Isi konten: </strong><br>${desc}</li>`;
-      content += '</ul>';
+      content += '</ul>'; 
       $('#detailModal .modal-body').html(content);
       $('#detailModal .modal-tittle').text('Detail Kategori');
       $('#detailModal').modal('show');
+      
     }
  
 

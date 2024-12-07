@@ -582,3 +582,10 @@ $(function() {
     });
   }
 });
+
+$(document).ready(function () {
+  // Fungsi untuk menangani saat modal ditutup
+  $('#exampleModalLong').on('hidden.bs.modal', function () { 
+      $(this).attr('aria-hidden', 'true'); 
+  });
+});

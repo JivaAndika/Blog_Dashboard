@@ -98,7 +98,6 @@ $next = ($pageActive < $countPage) ? $pageActive + 1 :$countPage ;
                           <th>Gambar kategori</th>
                           <th>Action</th>
                         </tr>
-                        <?php $num = 1 ?>
                         <?php foreach($Categories as $Categorie ):?>
                         <tr>
                           <td><?= $num ?> </td>

@@ -63,8 +63,8 @@ abstract class Model extends Connection implements ModelInterface{
         $result = mysqli_query($this->db, $query);
         return $this->convert_data($result);
     }
-    public function paggination_data($startData , $limit, $table ,$order){
-        $query = "SELECT * FROM $table $order LIMIT $startData, $limit";
+    public function paggination_data($startData , $limit, $table ){
+        $query = "SELECT * FROM $table  LIMIT $startData, $limit";
         $result = mysqli_query($this->db, $query);
         return $this->convert_data($result);
     

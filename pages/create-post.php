@@ -40,7 +40,7 @@ if(isset($_POST['submit'])){
     $tittle = $_POST['tittle'];
     echo "<script>
     alert('Post baru ditambahkan dengan judul {$tittle}');
-    window.location.href = 'create-post.php';
+    window.location.href = 'index-post.php';
     </script>";
 }
 
@@ -150,14 +150,7 @@ if(isset($_POST['submit'])){
                                                 <div class="form-text text-muted">The image must have a maximum size of 1MB</div>
                                             </div>
                                         </div>
-                                        <div class="form-group">
-                                            <label for="user_id">Pilih Author</label>
-                                            <select name="user_id" id="user_id" class="form-control selectric">
-                                                <?php foreach ($users as $user) : ?>
-                                                <option value="<?= $user['id_user'] ?>"><?= $user['full_name'] ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </div>
+                                        <input name="user_id" type="hidden" value="<?= $_SESSION["id"] ?>">
                                         <div class="form-group">
                                             <label for="category_id">Pilih kategori</label>
                                             <select  name="category_id" id="category_id" class="form-control selectric">
@@ -167,7 +160,7 @@ if(isset($_POST['submit'])){
                                             </select>
                                         </div>
                                         <div class="form-group">
-                                            <label for="tags">Pilih kategori</label>
+                                            <label for="tags">Pilih Tag</label>
                                             <select  name="tag_id_pivot[]" id="tags" class="form-control select2" multiple="">
                                                 <?php foreach ($tags as $tag) : ?>
                                                 <option value="<?= $tag['id_tag'] ?>"><?= $tag['name_tag'] ?></option>

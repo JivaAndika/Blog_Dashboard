@@ -1,70 +1,43 @@
 <?php
 require_once __DIR__ . '/../Model/Model.php';
 require_once __DIR__ . '/../Model/Posts.php';
-require_once __DIR__ . '/../Model/kategori.php';
-require_once __DIR__ . '/../Model/Users.php';
-require_once __DIR__ . '/../Model/Tags.php';
 
 if (!isset($_SESSION["full_name"])) {
     header("Location: login.php");
     exit;
 }
+$id_user = $_SESSION["id_user"];
 
+
+$posts = new Posts();
+
+if (isset($_SESSION["admin"])) {
+    $limit = 2;
+    $halamanAktif = (isset($_GET["page"]) ? $_GET["page"] : 1);
+    $startData = ($limit * $halamanAktif) - $limit;
+    $lenght = count($posts->all());
+    $countPage = ceil($lenght / $limit);
+
+    $posts_admin = $posts->all2($startData, $limit);
+}
 
 if (isset($_SESSION["user"])) {
-    header("Location: index.php");
-    exit;
+    $limit = 2;
+    $halamanAktif = (isset($_GET["page"]) ? $_GET["page"] : 1);
+    $startData = ($limit * $halamanAktif) - $limit;
+    $lenght = count($posts->all());
+    $countPage = ceil($lenght / $limit);
+    $posts_user = $posts->all2($startData, $limit);
 }
 
-
-$category = new Kategori();
-$category_all = $category->all();
-$users = new Users();
-$users_all = $users->all();
-$posts = new Posts();
-$tags = new Tags();
-$tags_all = $tags->all();
-
-
-if (isset($_POST["submit"])) {
-    $datas = [
-        "post" => $_POST,
-        "files" => $_FILES
-    ];
-
-
-    $posts = $posts->create($datas);
-
-    if (gettype($posts) == "string") {
-        echo "<script type='text/javascript'>
-            document.addEventListener('DOMContentLoaded', function() {
-            Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: `{$posts}`,
-            });
-            });
-            </script>";
-    } else {
-        echo "<script type='text/javascript'>
-            document.addEventListener('DOMContentLoaded', function() { 
-                Swal.fire({
-                    position: 'center',
-                    icon: 'success',
-                    title: 'Posts berhasil ditambahkan!',
-                    showConfirmButton: false,
-                    timer: 2000
-                });
-                setTimeout(() => {
-                window.location.href = 'index-posts.php'
-                },2000)
-            });
-            </script>";
-    }
+if (isset($_SESSION["author"])) {
+    $posts_all = $posts->all_id($id_user);
 }
 
+$count = $posts->all();
 
 ?>
+
 
 <!DOCTYPE html>
 <html :class="{ 'theme-dark': dark }" x-data="data()" lang="en">
@@ -72,16 +45,16 @@ if (isset($_POST["submit"])) {
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tambah Kategori - Windmill Dashboard</title>
+    <title>Tables - Windmill Dashboard</title>
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
         rel="stylesheet" />
-    <!-- <link rel="stylesheet" href="../assets/css/tailwind.output.css" /> -->
+    <!-- <link rel="stylesheet" href="./../assets/css/tailwind.output.css" /> -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script
         src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js"
         defer></script>
-    <script src="../assets/js/init-alpine.js"></script>
+    <script src="./../assets/js/init-alpine.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
@@ -91,231 +64,357 @@ if (isset($_POST["submit"])) {
         class="flex h-screen bg-gray-50 dark:bg-gray-900"
         :class="{ 'overflow-hidden': isSideMenuOpen }">
 
-
         <!-- Sidebar -->
         <?php include('../layouts/sidebar.php') ?>
 
-        <!-- Main Content -->
-        <div class="flex flex-col flex-1">
-            <!-- Header -->
+        <div class="flex flex-col flex-1 w-full">
+            <!--HEADER START  -->
             <?php include('../layouts/header.php') ?>
-
-            <!-- Main Section -->
+            <!-- HEADER END -->
             <main class="h-full pb-16 overflow-y-auto">
-
-                <div class="container px-6 mx-auto">
-                    <!-- Page Title -->
-                    <h2 class="my-6 text-2xl font-semibold text-gray-700 dark:text-gray-200">
-                        Tambah Posts
+                <!-- ALERT -->
+                <div class="container grid px-6 mx-auto">
+                    <h2
+                        class="my-6 text-2xl font-semibold text-gray-700 dark:text-gray-200">
+                        Posts
                     </h2>
 
-                    <!-- Form Section -->
-                    <div class="flex flex-wrap items-center justify-between gap-6">
-                        <!-- Image Section -->
-                        <div class="w-full md:w-[40%]">
-                            <img
-                                src="../assets/img/kategori.png"
-                                alt="Ilustrasi Kategori"
-                                class="w-full h-auto rounded-lg shadow-md" />
-                        </div>
+                    <!-- Search Bar -->
+                    <div class="flex justify-between items-center mb-4">
+                        <?php if (isset($_SESSION["author"])): ?>
+                            <h4 class="text-lg font-semibold text-gray-600 dark:text-gray-300">
+                                Postingan Anda
+                            </h4>
+                        <?php else: ?>
+                            <h4 class="text-lg font-semibold text-gray-600 dark:text-gray-300">
+                                Tabel Posts
+                            </h4>
+                        <?php endif; ?>
+                        <div class="relative w-64 max-w-xs">
+                            <input
+                                type="text"
+                                id="keyword"
+                                name="keyword"
+                                placeholder="Cari kategori..."
+                                class="block w-full px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 focus:border-purple-400 focus:ring-purple-300 focus:outline-none focus:ring focus:ring-opacity-40">
 
-                        <!-- Form Section -->
-                        <div class="w-full md:w-[55%]">
-                            <form
-                                action=""
-                                method="post"
-                                class="bg-white p-6 rounded-lg shadow-md dark:bg-gray-800" enctype="multipart/form-data">
-
-
-                                <!-- Input Group -->
-                                <div class="space-y-4">
-                                    <!-- Nama Kategori -->
-                                    <div>
-                                        <label
-                                            for="title"
-                                            class="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                                            Judul
-                                        </label>
-                                        <input
-                                            type="text"
-                                            id="title"
-                                            name="title"
-                                            placeholder="Masukkan judul"
-                                            required
-                                            class="mt-1 block w-full px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 focus:border-purple-400 focus:ring-purple-300 focus:outline-none focus:ring focus:ring-opacity-40" />
-                                    </div>
-
-                                    <!-- Total Artikel -->
-                                    <div>
-                                        <label
-                                            for="content"
-                                            class="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                                            Konten
-                                        </label>
-                                        <textarea
-                                            id="content"
-                                            name="content"
-                                            placeholder="Masukkan konten"
-                                            required
-                                            class="mt-1 h-52 block w-full px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 focus:border-purple-400 focus:ring-purple-300 focus:outline-none focus:ring focus:ring-opacity-40"> </textarea>
-                                    </div>
-                                    <div>
-                                        <label
-                                            for="file_upload"
-                                            class="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                                            Upload Gambar
-                                        </label>
-                                        <div class="mt-2 flex items-center">
-                                            <label
-                                                for="file_upload"
-                                                class="flex items-center justify-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg shadow-md cursor-pointer hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75">
-                                                <svg
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    class="h-5 w-5 mr-2"
-                                                    viewBox="0 0 20 20"
-                                                    fill="currentColor">
-                                                    <path
-                                                        fill-rule="evenodd"
-                                                        d="M4 3a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V3zm3 0a1 1 0 000 2h6a1 1 0 100-2H7zM5 16h10v1a1 1 0 01-1 1H6a1 1 0 01-1-1v-1zm2-8a1 1 0 000 2h6a1 1 0 100-2H7z"
-                                                        clip-rule="evenodd" />
-                                                </svg>
-                                                Pilih File
-                                            </label>
-                                            <input
-                                                id="file_upload"
-                                                name="attachment"
-                                                type="file"
-                                                class="hidden">
-                                            <span id="file_name" class="ml-3 text-sm text-gray-600 dark:text-gray-400">
-                                                Tidak ada file yang dipilih
-                                            </span>
-                                        </div>
-                                    </div>
-
-
-                                    <div class="mt-4">
-                                        <?php if (isset($_SESSION["admin"])): ?>
-                                            <label
-                                                for="user_select"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                                                Pilih Author
-                                            </label>
-                                            <select
-                                                id="user_select"
-                                                name="user_id"
-                                                required
-                                                class="mt-1 block w-full px-4 py-2 text-sm bg-white border border-gray-300 rounded-md text-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 focus:border-purple-400 focus:ring-purple-300 focus:outline-none focus:ring focus:ring-opacity-40">
-                                                <?php foreach ($users_all as $user): ?>
-                                                    <option value="<?= $user["id_user"] ?>"><?= $user["full_name"] ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        <?php endif; ?>
-                                        <?php if (isset($_SESSION["author"])): ?>
-                                            <input name="user_id" type="hidden" value="<?= $_SESSION["id_user"] ?>">
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="mt-4">
-                                        <label
-                                            for="category_select"
-                                            class="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                                            Pilih Kategori
-                                        </label>
-                                        <select
-                                            id="category_select"
-                                            name="category_id"
-                                            required
-                                            class="mt-1 block w-full px-4 py-2 text-sm bg-white border border-gray-300 rounded-md text-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 focus:border-purple-400 focus:ring-purple-300 focus:outline-none focus:ring focus:ring-opacity-40">
-                                            <?php foreach ($category_all as $category): ?>
-                                                <option value="<?= $category["id_category"] ?>"><?= $category["name_category"] ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                        <label for="tags" class="mt-5 block text-sm font-medium text-gray-700 dark:text-gray-200">Masukan Tags</label>
-                                        <select id="tags" name="tag_id_pivot[]" multiple="multiple" data-hs-select='{
-                                        "placeholder": "Select multiple options...",
-                                        "toggleTag": "<button type=\"button\" aria-expanded=\"false\"></button>",
-                                        "toggleClasses": "hs-select-disabled:pointer-events-none hs-select-disabled:opacity-50 relative py-3 ps-4 pe-9 flex gap-x-2 text-nowrap w-full cursor-pointer bg-white border border-gray-200 rounded-lg text-start text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400 dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-neutral-600",
-                                        "toggleCountText": "selected",
-                                        "dropdownClasses": "mt-2 z-50 w-full max-h-72 p-1 space-y-0.5 bg-white border border-gray-200 rounded-lg overflow-hidden overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-track]:bg-neutral-700 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500 dark:bg-neutral-900 dark:border-neutral-700",
-                                        "optionClasses": "py-2 px-4 w-full text-sm text-gray-800 cursor-pointer hover:bg-gray-100 rounded-lg focus:outline-none focus:bg-gray-100 dark:bg-neutral-900 dark:hover:bg-neutral-800 dark:text-neutral-200 dark:focus:bg-neutral-800",
-                                        "optionTemplate": "<div class=\"flex justify-between items-center w-full\"><span data-title></span><span class=\"hidden hs-selected:block\"><svg class=\"shrink-0 size-3.5 text-blue-600 dark:text-blue-500 \" xmlns=\"http:.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"20 6 9 17 4 12\"/></svg></span></div>",
-                                        "extraMarkup": "<div class=\"absolute top-1/2 end-3 -translate-y-1/2\"><svg class=\"shrink-0 size-3.5 text-gray-500 dark:text-neutral-500 \" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m7 15 5 5 5-5\"/><path d=\"m7 9 5-5 5 5\"/></svg></div>"
-                                    }' class="hidden">
-
-                                            <?php foreach ($tags_all as $tags): ?>
-                                                <option value="<?= $tags["id_tag"] ?>"><?= $tags["name_tag"] ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
-
-                                </div>
-
-                                <!-- Submit Button -->
-                                <button
-                                    name="submit"
-                                    type="submit"
-                                    class="mt-6 w-full px-4 py-2 text-sm font-medium leading-5 text-white bg-purple-600 border border-transparent rounded-lg hover:bg-purple-700 focus:outline-none focus:shadow-outline-purple">
-                                    Tambah
-                                </button>
-                            </form>
                         </div>
                     </div>
-                </div>
-            </main>
-        </div>
-    </div>
-    <script src="./../node_modules/preline/dist/preline.js"></script>
-    <script>
-        const fileInput = document.getElementById('file_upload');
-        const fileName = document.getElementById('file_name');
 
-        fileInput.addEventListener('change', () => {
-            fileName.textContent = fileInput.files[0].name
-            if (fileInput == String) {
-                fileName.textContent = "Tidak ada file yang dipilih"
-            }
-        });
+                    <!-- With actions -->
+                    <div id="container" class="w-full overflow-hidden rounded-lg shadow-xs">
+                        <div class="w-full overflow-x-auto">
+                            <div id="container">
+                                <table class="w-full whitespace-no-wrap">
+                                    <thead>
+                                        <tr
+                                            class="text-xs font-semibold tracking-wide text-left text-gray-500 uppercase border-b dark:border-gray-700 bg-gray-50 dark:text-gray-400 dark:bg-gray-800">
+                                            <th class="px-4 py-3">No</th>
+                                            <th class="px-4 py-3">Judul</th>
+                                            <th class="px-4 py-3">Gambar</th>
+                                            <th class="px-4 py-3">Author</th>
+                                            <th class="px-4 py-3">kategori</th>
+                                            <th class="px-4 py-3">Action</th>
+                                        </tr>
+                                    </thead>
 
-        function logout(event) {
-            const swalWithBootstrapButtons = Swal.mixin({
-                customClass: {
-                    confirmButton: "p-3 bg-green-500 text-white ml-2",
-                    cancelButton: "p-3 bg-red-500 text-white mr-3"
-                },
-                buttonsStyling: false
-            });
-            swalWithBootstrapButtons.fire({
-                title: "Apakah anda mau Logout??",
-                text: "Klik YES jika ingin logout",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonText: "Yes, of course!",
-                cancelButtonText: "No, cancel!",
-                reverseButtons: true
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    swalWithBootstrapButtons.fire({
-                        title: "Deleted!",
-                        text: "Anda Berhasil Logout",
-                        icon: "success"
-                    });
-                    setTimeout(() => {
-                        window.location.href = 'logout.php';
-                    }, 1200)
-                } else if (
-                    /* Read more about handling dismissals below */
-                    result.dismiss === Swal.DismissReason.cancel
-                ) {
-                    swalWithBootstrapButtons.fire({
-                        title: "Cancelled",
-                        text: "Anda Gagal Logout",
-                        icon: "error"
-                    });
-                }
-            });
-        }
-    </script>
-</body>
+                                    <!-- TABEL USER START -->
+                                    <?php if (isset($_SESSION["user"])): ?>
+                                        <?php $no = 1 + $startData ?>
+                                        <tbody
+                                            class="bg-white divide-y dark:divide-gray-700 dark:bg-gray-800">
+                                            <?php foreach ($posts_user as $posts): ?>
+                                                <tr class="text-gray-700 dark:text-gray-400">
+                                                    <td class="px-4 py-3 text-sm"><?= $no ?></td>
+                                                    <td class="px-4 py-3 text-sm">
+                                                        <?= $posts["title"] ?>
+                                                    </td>
+                                                    <td class="px-4 py-3 text-sm">
+                                                        <img class="w-10" src="./../public/img/konten/<?= $posts["attachment"] ?>" alt="">
+                                                    </td>
+                                                    <td class="px-4 py-3 text-sm">
+                                                        <?= $posts["full_name"] ?>
+                                                    </td>
+                                                    <td class="px-4 py-3 text-sm">
+                                                        <?= $posts["name_category"] ?>
+                                                    </td>
+                                                    <td class="px-4 py-3 text-sm">Anda Tidak Memiliki Akses</td>
+                                                </tr>
+                                                <?php $no++ ?>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                        <div
+                                            class="grid px-4 py-3 text-xs font-semibold tracking-wide text-gray-500 uppercase border-t dark:border-gray-700 bg-gray-50 sm:grid-cols-9 dark:text-gray-400 dark:bg-gray-800">
+                                            <span class="flex items-center col-span-3">
+                                                Showing <?= $limit ?> of <?= count($count) ?>
+                                            </span>
+                                            <span class="col-span-2"></span>
+                                            <!-- Pagination -->
+                                            <span class="flex col-span-4 mt-2 sm:mt-auto sm:justify-end">
+                                                <nav aria-label="Table navigation">
+                                                    <ul class="inline-flex items-center">
+                                                        <li>
+                                                            <?php if ($halamanAktif > 1): ?>
+                                                                <a href="?page=<?= $halamanAktif - 1 ?>">
+                                                                    <button
+                                                                        class="px-3 py-1 rounded-md rounded-l-lg focus:outline-none focus:shadow-outline-purple"
+                                                                        aria-label="Previous">
+                                                                        <svg
+                                                                            class="w-4 h-4 fill-current"
+                                                                            aria-hidden="true"
+                                                                            viewBox="0 0 20 20">
+                                                                            <path
+                                                                                d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                                                                                clip-rule="evenodd"
+                                                                                fill-rule="evenodd"></path>
+                                                                        </svg>
+                                                                    </button>
+                                                                </a>
+                                                            <?php else: ?>
+                                                                <a href="">
+                                                                    <button
+                                                                        class="px-3 py-1 rounded-md rounded-l-lg focus:outline-none focus:shadow-outline-purple"
+                                                                        aria-label="Previous">
+                                                                        <svg
+                                                                            class="w-4 h-4 fill-current"
+                                                                            aria-hidden="true"
+                                                                            viewBox="0 0 20 20">
+                                                                            <path
+                                                                                d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                                                                                clip-rule="evenodd"
+                                                                                fill-rule="evenodd"></path>
+                                                                        </svg>
+                                                                    </button>
+                                                                </a>
+                                                            <?php endif; ?>
+                                                        </li>
+                                                        <?php for ($i = 1; $i <= $countPage; $i++): ?>
+                                                            <?php if ($i == $halamanAktif): ?>
+                                                                <a href="?page=<?= $i ?>">
+                                                                    <button
+                                                                        class="px-3 py-1 rounded-md focus:outline-none focus:shadow-outline-purple transition-colors duration-150 bg-purple-600 border border-r-0 border-purple-600 focus:shadow-outline-purple">
+                                                                        <?= $i ?>
+                                                                    </button>
+                                                                </a>
+                                                            <?php else: ?>
+                                                                <a href="?page=<?= $i ?>">
+                                                                    <button
+                                                                        class="px-3 py-1 rounded-md focus:outline-none focus:shadow-outline-purple ">
+                                                                        <?= $i ?>
+                                                                    </button>
+                                                                </a>
+                                                            <?php endif; ?>
+                                                            <li>
+                                                            </li>
+                                                        <?php endfor; ?>
+                                                        <li>
+                                                            <?php if ($halamanAktif < $countPage): ?>
+                                                                <a href="?page=<?= $halamanAktif + 1 ?>">
+                                                                    <button
+                                                                        class="px-3 py-1 rounded-md rounded-r-lg focus:outline-none focus:shadow-outline-purple"
+                                                                        aria-label="Next">
+                                                                        <svg
+                                                                            class="w-4 h-4 fill-current"
+                                                                            aria-hidden="true"
+                                                                            viewBox="0 0 20 20">
+                                                                            <path
+                                                                                d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                                                                clip-rule="evenodd"
+                                                                                fill-rule="evenodd"></path>
+                                                                        </svg>
+                                                                    </button>
+                                                                </a>
+                                                            <?php else: ?>
+                                                                <a href="">
+                                                                    <button
+                                                                        class="px-3 py-1 rounded-md rounded-r-lg focus:outline-none focus:shadow-outline-purple"
+                                                                        aria-label="Next">
+                                                                        <svg
+                                                                            class="w-4 h-4 fill-current"
+                                                                            aria-hidden="true"
+                                                                            viewBox="0 0 20 20">
+                                                                            <path
+                                                                                d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                                                                clip-rule="evenodd"
+                                                                                fill-rule="evenodd"></path>
+                                                                        </svg>
+                                                                    </button>
+                                                                </a>
+                                                            <?php endif; ?>
+                                                        </li>
+                                                    </ul>
+                                                </nav>
+                                            </span>
+                                        </div>
+                                    <?php endif; ?>
+                                    <!-- TABEL USER END -->
 
+                                    <!-- TABEL ADMIN START -->
+                                    <?php if (isset($_SESSION["admin"])): ?>
+                                        <?php $no = 1 + $startData ?>
+                                        <tbody
+                                            class="bg-white divide-y dark:divide-gray-700 dark:bg-gray-800">
+                                            <?php foreach ($posts_admin as $posts): ?>
+                                                <tr class="text-gray-700 dark:text-gray-400">
+                                                    <td class="px-4 py-3 text-sm"><?= $no ?></td>
+                                                    <td class="px-4 py-3 text-sm">
+                                                        <?= $posts["title"] ?>
+                                                    </td>
+                                                    <td class="px-4 py-3 text-sm">
+                                                        <img class="w-10" src="./../public/img/konten/<?= $posts["attachment"] ?>" alt="">
+                                                    </td>
+                                                    <td class="px-4 py-3 text-sm">
+                                                        <?= $posts["full_name"] ?>
+                                                    </td>
+                                                    <td class="px-4 py-3 text-sm">
+                                                        <?= $posts["name_category"] ?>
+                                                    </td>
+                                                    <td class="px-4 py-3">
+                                                        <div class="flex items-center space-x-4 text-sm">
+                                                            <div onclick="kontenDetail('<?= $posts['content'] ?>')" class="info w-5 h-5 cursor-pointer">
+                                                                <img src="../assets/img/info.png" alt="" class="w-full h-full">
+                                                            </div>
+                                                            <a href="update-posts.php?id=<?= $posts['id_posts'] ?>">
+                                                                <button
+                                                                    class="flex items-center justify-between px-2 py-2 text-sm font-medium leading-5 text-purple-600 rounded-lg dark:text-gray-400 focus:outline-none focus:shadow-outline-gray"
+                                                                    aria-label="Edit">
+                                                                    <svg
+                                                                        class="w-5 h-5"
+                                                                        aria-hidden="true"
+                                                                        fill="currentColor"
+                                                                        viewBox="0 0 20 20">
+                                                                        <path
+                                                                            d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+                                                                    </svg>
+                                                                </button>
+                                                            </a>
+                                                            <button onclick="confirmDelete(event, '<?= $posts['id_posts'] ?>')"
+                                                                class="flex items-center justify-between px-2 py-2 text-sm font-medium leading-5 text-purple-600 rounded-lg dark:text-gray-400 focus:outline-none focus:shadow-outline-gray"
+                                                                aria-label="Delete">
+                                                                <svg
+                                                                    class="w-5 h-5"
+                                                                    aria-hidden="true"
+                                                                    fill="currentColor"
+                                                                    viewBox="0 0 20 20">
+                                                                    <path
+                                                                        fill-rule="evenodd"
+                                                                        d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                                                                        clip-rule="evenodd"></path>
+                                                                </svg>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <?php $no++ ?>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                        <div
+                                            class="grid px-4 py-3 text-xs font-semibold tracking-wide text-gray-500 uppercase border-t dark:border-gray-700 bg-gray-50 sm:grid-cols-9 dark:text-gray-400 dark:bg-gray-800">
+                                            <span class="flex items-center col-span-3">
+                                                Showing <?= $limit ?> of <?= count($count) ?>
+                                            </span>
+                                            <span class="col-span-2"></span>
+                                            <!-- Pagination -->
+                                            <span class="flex col-span-4 mt-2 sm:mt-auto sm:justify-end">
+                                                <nav aria-label="Table navigation">
+                                                    <ul class="inline-flex items-center">
+                                                        <li>
+                                                            <?php if ($halamanAktif > 1): ?>
+                                                                <a href="?page=<?= $halamanAktif - 1 ?>">
+                                                                    <button
+                                                                        class="px-3 py-1 rounded-md rounded-l-lg focus:outline-none focus:shadow-outline-purple"
+                                                                        aria-label="Previous">
+                                                                        <svg
+                                                                            class="w-4 h-4 fill-current"
+                                                                            aria-hidden="true"
+                                                                            viewBox="0 0 20 20">
+                                                                            <path
+                                                                                d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                                                                                clip-rule="evenodd"
+                                                                                fill-rule="evenodd"></path>
+                                                                        </svg>
+                                                                    </button>
+                                                                </a>
+                                                            <?php else: ?>
+                                                                <a href="">
+                                                                    <button
+                                                                        class="px-3 py-1 rounded-md rounded-l-lg focus:outline-none focus:shadow-outline-purple"
+                                                                        aria-label="Previous">
+                                                                        <svg
+                                                                            class="w-4 h-4 fill-current"
+                                                                            aria-hidden="true"
+                                                                            viewBox="0 0 20 20">
+                                                                            <path
+                                                                                d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                                                                                clip-rule="evenodd"
+                                                                                fill-rule="evenodd"></path>
+                                                                        </svg>
+                                                                    </button>
+                                                                </a>
+                                                            <?php endif; ?>
+                                                        </li>
+                                                        <?php for ($i = 1; $i <= $countPage; $i++): ?>
+                                                            <?php if ($i == $halamanAktif): ?>
+                                                                <a href="?page=<?= $i ?>">
+                                                                    <button
+                                                                        class="px-3 py-1 rounded-md focus:outline-none focus:shadow-outline-purple transition-colors duration-150 bg-purple-600 border border-r-0 border-purple-600 focus:shadow-outline-purple">
+                                                                        <?= $i ?>
+                                                                    </button>
+                                                                </a>
+                                                            <?php else: ?>
+                                                                <a href="?page=<?= $i ?>">
+                                                                    <button
+                                                                        class="px-3 py-1 rounded-md focus:outline-none focus:shadow-outline-purple ">
+                                                                        <?= $i ?>
+                                                                    </button>
+                                                                </a>
+                                                            <?php endif; ?>
+                                                            <li>
+                                                            </li>
+                                                        <?php endfor; ?>
+                                                        <li>
+                                                            <?php if ($halamanAktif < $countPage): ?>
+                                                                <a href="?page=<?= $halamanAktif + 1 ?>">
+                                                                    <button
+                                                                        class="px-3 py-1 rounded-md rounded-r-lg focus:outline-none focus:shadow-outline-purple"
+                                                                        aria-label="Next">
+                                                                        <svg
+                                                                            class="w-4 h-4 fill-current"
+                                                                            aria-hidden="true"
+                                                                            viewBox="0 0 20 20">
+                                                                            <path
+                                                                                d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                                                                clip-rule="evenodd"
+                                                                                fill-rule="evenodd"></path>
+                                                                        </svg>
+                                                                    </button>
+                                                                </a>
+                                                            <?php else: ?>
+                                                                <a href="">
+                                                                    <button
+                                                                        class="px-3 py-1 rounded-md rounded-r-lg focus:outline-none focus:shadow-outline-purple"
+                                                                        aria-label="Next">
+                                                                        <svg
+                                                                            class="w-4 h-4 fill-current"
+                                                                            aria-hidden="true"
+                                                                            viewBox="0 0 20 20">
+                                                                            <path
+                                                                                d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                                                                clip-rule="evenodd"
+                                                                                fill-rule="evenodd"></path>
+                                                                        </svg>
+                                                                    </button>
+                                                                </a>
+                                                            <?php endif; ?>
+                                                        </li>
+                                                    </ul>
+                                                </nav>
+                                            </span>
+                                        </div>
+                                    <?php endif; ?>
+                                    <!-- TABEL ADMIN END -->
 
-
-</html>
+                                    <!-- TABEL AUTHOR START -->
+                                    <?php if (isset($_SESSION["author"])): ?>
+                                        <?php $no = 1 ?>
+                                        <?php endif; ?>

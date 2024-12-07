@@ -33,4 +33,9 @@ class Tags extends Model {
         $keyword = "LIMIT $starData , $limit";
         return parent::paggination_data($starData,$limit, $this->table);
     }
+    public function show_tag(){
+        $query = "SELECT * FROM tags JOIN pivot_posts_tags ON tags.id_tag = pivot_posts_tags.tag_id_pivot JOIN posts ON posts.id_post = pivot_posts_tags.post_id_pivot WHERE pivot_posts_tags.post_id_pivot = posts.id_post";
+        $result = mysqli_query($this->db,$query);
+        return $this->convert_data($result);
+    }
 }

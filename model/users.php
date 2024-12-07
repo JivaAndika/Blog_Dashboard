@@ -69,7 +69,7 @@ class Users extends Model {
     public function delete($id){
         return parent::delete_data($id,$this->primary_key,$this->table);
     }
-    public function register($datas){
+    public function register($datas): array|string{
         $name = $datas['post']['full_name'];
         $email = $datas['post']['email'];
         $password = $datas['post']['password'];
@@ -129,16 +129,6 @@ class Users extends Model {
             return "Password salah";
         } 
         
-        if($user['role'] == 'admin'){
-            $_SESSION['user'] = $user['role'];
-        }
-        
-        if($_SESSION['role'] = "author"){
-            $_SESSION['author'] = $user['role'];
-        }
-        if($_SESSION['role'] = "admin"){
-            $_SESSION['admin'] = $user['role'];
-        }
 
 
         $_SESSION['id'] = $user['id_user'];

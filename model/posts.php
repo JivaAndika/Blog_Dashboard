@@ -8,7 +8,7 @@ class Posts extends Model {
     public function create($datas){
        $tags_id = $datas['post']['tag_id_pivot'];
 
-       if ($datas['files']['attachment']['name'] == ""){
+       if ($datas['files']['attachment_post']['name'] == ""){
         return "Masukkan gambar terlebih dahulu";
        }
 
@@ -37,7 +37,7 @@ class Posts extends Model {
 
         $query_id = mysqli_insert_id($this->db);
         foreach($tags_id as $tag){
-          $query = "INSERT INTO pivot_posts_tags (post_id_pivot, tag_id_pivot) VALUES ('$query_id', '$tag)";
+          $query = "INSERT INTO pivot_posts_tags (post_id_pivot, tag_id_pivot) VALUES ('$query_id', '$tag')";
           $result = mysqli_query($this->db, $query);
         }
         return $datas;
@@ -92,7 +92,10 @@ class Posts extends Model {
     
     }
     public function delete($id){
-        return parent::delete_data($id,$this->primary_key,$this->table);
+      $query_delete = "DELETE FROM pivot_posts_tags WHERE post_id_pivot = '$id'";
+      $result_delete = mysqli_query($this->db, $query_delete);
+      parent::delete_data($id,$this->primary_key,$this->table);
+      return true;
     }
     public function search($keyword, $startData = null, $limit = null){
         $queryLimit = "";
@@ -104,26 +107,12 @@ class Posts extends Model {
         $result = mysqli_query($this->db, $query);
         return $this->convert_data($result);
     }
-    public function search_id($id,$startData = null, $limit = null, $keyword)
-    {
-        $queryLimit = "";
-        if (isset($startData) && isset($limit)){
-          $queryLimit = "LIMIT $startData, $limit";
-        }
-        $keyword = " AND tittle LIKE '%{$keyword}%' $queryLimit";
-        $query = "SELECT posts.*, categories.name_category, users.full_name AS author_name FROM posts JOIN categories ON posts.category_id = categories.id_category JOIN users ON posts.user_id = users.id_user WHERE posts.user_id = '$id' $keyword";
-        $result = mysqli_query($this->db, $query);
-        return $this->convert_data($result);
-    }
-    public function pagginate($starData,$limit){
+    public function pagginate($startData,$limit,$order){
+      $query = "SELECT * FROM {$this->table} $order LIMIT $startData, $limit";
       $order = " order by tittle";
-        return parent::paggination_data($starData,$limit, $this->table, $order);
-    }
-    public function all_id($id){
-      $query = "SELECT * post.*, categories.name_category, users.full_name AS author_name FROM posts JOIN categories ON posts.category_id = categories.id_category JOIN users ON posts.user_id = = users.id_user WHERE posts.user_id = '$id' order by tittle";
       $result = mysqli_query($this->db, $query);
       return $this->convert_data($result);
-  }
+    }
 
     public function all2($starData,$limit){
         $query = 

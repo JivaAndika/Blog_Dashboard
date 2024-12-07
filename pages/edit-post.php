@@ -1,6 +1,7 @@
 <?php
 require_once  __DIR__ ."/../model/posts.php";
 require_once  __DIR__ ."/../model/categories.php";
+require_once  __DIR__ ."/../model/tags.php";
 require_once  __DIR__ ."/../model/users.php";
 require_once  __DIR__ ."/../model/model.php";
 
@@ -16,9 +17,25 @@ if (!isset($_SESSION['full_name'])){
   $Posts = new Posts();
   $Categories = new Categories();
   $users = new Users();
+
   $categories_details = $Categories->all();
   $user_all = $users->all();
   $post_find = $Posts->find($id);
+
+  $tags = new Tags();
+  $show_tag = $tags->show_tag();
+  $groupedTags = [];
+  foreach ($show_tag as $tag) {
+      $groupedTags[$tag['post_id_pivot']][] = [
+          'id_tag' => $tag['id_tag'],
+          'name_tag' => $tag['name_tag']
+      ];
+  }
+  $allTags = $tags->all(); // Mengambil semua tag
+$selectedTags = $groupedTags[$post_find[0]['id_post']] ?? []; // Tag terpilih untuk post
+
+  
+
   
   
 
@@ -93,6 +110,8 @@ if(isset($_POST['submit'])){
     <link
         rel="stylesheet"
         href="../dist/assets/modules/owlcarousel2/dist/assets/owl.theme.default.min.css" />
+  <link rel="stylesheet" href="../dist/assets/modules/select2/dist/css/select2.min.css">
+  <link rel="stylesheet" href="../dist/assets/modules/jquery-selectric/selectric.css">
 
     <!-- Template CSS -->
     <link rel="stylesheet" href="../dist/assets/css/style.css" />
@@ -187,6 +206,17 @@ if(isset($_POST['submit'])){
                                                 <?php endforeach; ?>
                                             </select>
                                         </div>
+                                       <div class="form-group">
+    <label for="tags">Pilih Tag</label>
+    <select name="tag_id_pivot[]" id="tags" class="form-control select2" multiple="">
+        <?php foreach ($allTags as $tag): ?>
+            <option value="<?= $tag['id_tag'] ?>" 
+                <?= in_array($tag['id_tag'], array_column($selectedTags, 'id_tag')) ? 'selected' : '' ?>>
+                <?= $tag['name_tag'] ?>
+            </option>
+        <?php endforeach; ?>
+    </select>
+</div>
                                         <div class="d-flex flex-column flex-sm-row justify-content-end gap-2">    
                                         <button name="cancel" id="cancel" class="btn btn-secondary mb-2 mb-sm-0 mr-0 mr-sm-2 ">Cancel</button>
                                         <button  name="submit" id="submit" class="btn btn-primary mb-2 mb-sm-0 mr-0 mr-sm-2">Edit kategori</button>
@@ -221,6 +251,8 @@ if(isset($_POST['submit'])){
     <script src="../dist/assets/modules/owlcarousel2/dist/owl.carousel.min.js"></script>
     <script src="../dist/assets/modules/summernote/summernote-bs4.js"></script>
     <script src="../dist/assets/modules/chocolat/dist/js/jquery.chocolat.min.js"></script>
+  <script src="../dist/assets/modules/select2/dist/js/select2.full.min.js"></script>
+  <script src="../dist/assets/modules/jquery-selectric/jquery.selectric.min.js"></script>
 
     <!-- Page Specific JS File -->
     <script src="../dist/assets/js/page/index.js"></script>

@@ -96,7 +96,6 @@ $next = ($pageActive < $countPage) ? $pageActive + 1 :$countPage ;
                           <th>Nama tag</th>
                           <th>Action</th>
                         </tr>
-                        <?php $num = 1 ?>
                         <?php foreach($tags as $tag ):?>
                         <tr>
                           <td><?= $num ?> </td>
